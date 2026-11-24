@@ -1,0 +1,38 @@
+import java.util.ArrayList;
+import java.util.List;
+
+public final class FloydWarshall {
+    public FloydWarshall() { }
+
+    public ResultadoFloydWarshall calcular(Grafo grafo) {
+        int cantidad = grafo.getCantidadCiudades();
+        int[][] distancias = new int[cantidad][cantidad];
+        int[][] siguiente = new int[cantidad][cantidad];
+        List<ResultadoFloydWarshall.Actualizacion> actualizaciones = new ArrayList<>();
+        for (int origen = 0; origen < cantidad; origen++) {
+            for (int destino = 0; destino < cantidad; destino++) {
+                distancias[origen][destino] = grafo.getCosto(origen, destino);
+                siguiente[origen][destino] =
+                    grafo.getCosto(origen, destino) == Grafo.INFINITO ? -1 : destino;
+            }
+        }
+        for (int intermedia = 0; intermedia < cantidad; intermedia++) {
+            for (int origen = 0; origen < cantidad; origen++) {
+                if (distancias[origen][intermedia] == Grafo.INFINITO) continue;
+                for (int destino = 0; destino < cantidad; destino++) {
+                    if (distancias[intermedia][destino] == Grafo.INFINITO) continue;
+                    int alternativa =
+                        distancias[origen][intermedia] + distancias[intermedia][destino];
+                    if (alternativa < distancias[origen][destino]) {
+                        actualizaciones.add(new ResultadoFloydWarshall.Actualizacion(
+                            intermedia, origen, destino,
+                            distancias[origen][destino], alternativa));
+                        distancias[origen][destino] = alternativa;
+                        siguiente[origen][destino] = siguiente[origen][intermedia];
+                    }
+                }
+            }
+        }
+        return new ResultadoFloydWarshall(distancias, siguiente, actualizaciones);
+    }
+}
