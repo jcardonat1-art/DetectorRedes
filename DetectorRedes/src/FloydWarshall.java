@@ -1,38 +1,38 @@
-import java.util.ArrayList;
-import java.util.List;
-
-public final class FloydWarshall {
-    public FloydWarshall() { }
+// Algoritmo de Floyd-Warshall: calcula el costo minimo entre TODOS
+// los pares de dispositivos. Usa tres ciclos for anidados.
+public class FloydWarshall {
 
     public ResultadoFloydWarshall calcular(Grafo grafo) {
-        int cantidad = grafo.getCantidadCiudades();
-        int[][] distancias = new int[cantidad][cantidad];
-        int[][] siguiente = new int[cantidad][cantidad];
-        List<ResultadoFloydWarshall.Actualizacion> actualizaciones = new ArrayList<>();
-        for (int origen = 0; origen < cantidad; origen++) {
-            for (int destino = 0; destino < cantidad; destino++) {
-                distancias[origen][destino] = grafo.getCosto(origen, destino);
-                siguiente[origen][destino] =
-                    grafo.getCosto(origen, destino) == Grafo.INFINITO ? -1 : destino;
+        int n = grafo.getCantidad();
+        int[][] distancias = new int[n][n];
+        int[][] siguiente = new int[n][n];
+
+        // Se empieza con los costos directos de la red
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                distancias[i][j] = grafo.getCosto(i, j);
+                if (distancias[i][j] == Grafo.INFINITO) {
+                    siguiente[i][j] = -1;   // no hay ruta todavia
+                } else {
+                    siguiente[i][j] = j;
+                }
             }
         }
-        for (int intermedia = 0; intermedia < cantidad; intermedia++) {
-            for (int origen = 0; origen < cantidad; origen++) {
-                if (distancias[origen][intermedia] == Grafo.INFINITO) continue;
-                for (int destino = 0; destino < cantidad; destino++) {
-                    if (distancias[intermedia][destino] == Grafo.INFINITO) continue;
-                    int alternativa =
-                        distancias[origen][intermedia] + distancias[intermedia][destino];
-                    if (alternativa < distancias[origen][destino]) {
-                        actualizaciones.add(new ResultadoFloydWarshall.Actualizacion(
-                            intermedia, origen, destino,
-                            distancias[origen][destino], alternativa));
-                        distancias[origen][destino] = alternativa;
-                        siguiente[origen][destino] = siguiente[origen][intermedia];
+
+        // k es el dispositivo "intermedio" que se prueba para ir de i a j
+        for (int k = 0; k < n; k++) {
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    if (distancias[i][k] != Grafo.INFINITO && distancias[k][j] != Grafo.INFINITO) {
+                        int alternativa = distancias[i][k] + distancias[k][j];
+                        if (alternativa < distancias[i][j]) {
+                            distancias[i][j] = alternativa;
+                            siguiente[i][j] = siguiente[i][k];
+                        }
                     }
                 }
             }
         }
-        return new ResultadoFloydWarshall(distancias, siguiente, actualizaciones);
+        return new ResultadoFloydWarshall(distancias, siguiente);
     }
 }
