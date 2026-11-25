@@ -1,74 +1,36 @@
 import java.util.ArrayList;
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
 
-public final class ResultadoDijkstra {
-    private final int origen;
-    private final int[] distancias;
-    private final int[] predecesores;
-    private final List<Estado> estados;
+// Guarda lo que calcula Dijkstra desde un dispositivo de origen:
+//  - distancias: el costo minimo para llegar a cada dispositivo
+//  - predecesores: desde cual dispositivo se llega (sirve para armar la ruta)
+public class ResultadoDijkstra {
 
-    ResultadoDijkstra(int origen, int[] distancias, int[] predecesores,
-                      List<Estado> estados) {
-        this.origen = origen;
-        this.distancias = distancias.clone();
-        this.predecesores = predecesores.clone();
-        this.estados = Collections.unmodifiableList(new ArrayList<>(estados));
+    private int[] distancias;
+    private int[] predecesores;
+
+    public ResultadoDijkstra(int[] distancias, int[] predecesores) {
+        this.distancias = distancias;
+        this.predecesores = predecesores;
     }
 
     public int getDistanciaHasta(int destino) {
-        validarIndice(destino);
         return distancias[destino];
     }
 
-    public int getPredecesorDe(int ciudad) {
-        validarIndice(ciudad);
-        return predecesores[ciudad];
-    }
+    // Arma la ruta yendo desde el destino hacia atras, usando los predecesores
+    public ArrayList<Integer> getRutaHasta(int destino) {
+        ArrayList<Integer> ruta = new ArrayList<>();
 
-    public List<Integer> getRutaHasta(int destino) {
-        validarIndice(destino);
-        LinkedList<Integer> ruta = new LinkedList<>();
-        for (int actual = destino; actual != -1; actual = predecesores[actual]) {
-            ruta.addFirst(actual);
-            if (actual == origen) return Collections.unmodifiableList(ruta);
+        // Si la distancia es infinita, no hay ruta
+        if (distancias[destino] == Grafo.INFINITO) {
+            return ruta;
         }
-        return Collections.emptyList();
-    }
 
-    public List<Estado> getEstados() { return estados; }
-
-    private void validarIndice(int indice) {
-        if (indice < 0 || indice >= distancias.length) {
-            throw new IndexOutOfBoundsException("Indice de ciudad fuera del resultado: " + indice);
+        int actual = destino;
+        while (actual != -1) {
+            ruta.add(0, actual);          // se agrega al inicio de la lista
+            actual = predecesores[actual];
         }
-    }
-
-    public static final class Estado {
-        private final int ciudadSeleccionada;
-        private final int[] distancias;
-        private final int[] predecesores;
-
-        Estado(int ciudadSeleccionada, int[] distancias, int[] predecesores) {
-            this.ciudadSeleccionada = ciudadSeleccionada;
-            this.distancias = distancias.clone();
-            this.predecesores = predecesores.clone();
-        }
-        public int getCiudadSeleccionada() { return ciudadSeleccionada; }
-        public int getDistancia(int ciudad) {
-            validarIndice(ciudad);
-            return distancias[ciudad];
-        }
-        public int getPredecesor(int ciudad) {
-            validarIndice(ciudad);
-            return predecesores[ciudad];
-        }
-        private void validarIndice(int indice) {
-            if (indice < 0 || indice >= distancias.length) {
-                throw new IndexOutOfBoundsException(
-                    "Indice de ciudad fuera del estado: " + indice);
-            }
-        }
+        return ruta;
     }
 }
