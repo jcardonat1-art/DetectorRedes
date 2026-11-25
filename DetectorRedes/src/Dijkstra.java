@@ -1,57 +1,47 @@
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.PriorityQueue;
-
-public final class Dijkstra {
-    public Dijkstra() { }
+// Algoritmo de Dijkstra: calcula el camino de menor costo desde
+// un dispositivo de origen hacia todos los demas.
+public class Dijkstra {
 
     public ResultadoDijkstra calcular(Grafo grafo, int origen) {
-        int cantidad = grafo.getCantidadCiudades();
-        validarIndice(origen, cantidad);
-        int[] distancias = new int[cantidad];
-        int[] predecesores = new int[cantidad];
-        boolean[] seleccionados = new boolean[cantidad];
-        Arrays.fill(distancias, Grafo.INFINITO);
-        Arrays.fill(predecesores, -1);
+        int n = grafo.getCantidad();
+        int[] distancias = new int[n];
+        int[] predecesores = new int[n];
+        boolean[] visitado = new boolean[n];
+
+        // Al inicio todo esta lejos (INFINITO) y sin predecesor (-1)
+        for (int i = 0; i < n; i++) {
+            distancias[i] = Grafo.INFINITO;
+            predecesores[i] = -1;
+        }
         distancias[origen] = 0;
-        PriorityQueue<NodoDistancia> cola = new PriorityQueue<>(
-            Comparator.comparingInt(nodo -> nodo.distancia));
-        List<ResultadoDijkstra.Estado> estados = new ArrayList<>();
-        cola.add(new NodoDistancia(origen, 0));
-        while (!cola.isEmpty()) {
-            NodoDistancia actual = cola.poll();
-            int ciudad = actual.ciudad;
-            if (actual.distancia != distancias[ciudad] || seleccionados[ciudad]) continue;
-            seleccionados[ciudad] = true;
-            for (int destino = 0; destino < cantidad; destino++) {
-                int costo = grafo.getCosto(ciudad, destino);
-                if (costo == Grafo.INFINITO || seleccionados[destino]) continue;
-                int nuevaDistancia = distancias[ciudad] + costo;
-                if (nuevaDistancia < distancias[destino]) {
-                    distancias[destino] = nuevaDistancia;
-                    predecesores[destino] = ciudad;
-                    cola.add(new NodoDistancia(destino, nuevaDistancia));
+
+        for (int paso = 0; paso < n; paso++) {
+
+            // 1. Buscar el dispositivo no visitado con menor distancia
+            int actual = -1;
+            for (int i = 0; i < n; i++) {
+                if (!visitado[i] && (actual == -1 || distancias[i] < distancias[actual])) {
+                    actual = i;
                 }
             }
-            estados.add(new ResultadoDijkstra.Estado(ciudad, distancias, predecesores));
-        }
-        return new ResultadoDijkstra(origen, distancias, predecesores, estados);
-    }
 
-    private void validarIndice(int indice, int cantidad) {
-        if (indice < 0 || indice >= cantidad) {
-            throw new IndexOutOfBoundsException("Indice de origen fuera del grafo: " + indice);
-        }
-    }
+            // Si ya no quedan dispositivos alcanzables, se termina
+            if (actual == -1 || distancias[actual] == Grafo.INFINITO) {
+                break;
+            }
+            visitado[actual] = true;
 
-    private static final class NodoDistancia {
-        private final int ciudad;
-        private final int distancia;
-        private NodoDistancia(int ciudad, int distancia) {
-            this.ciudad = ciudad;
-            this.distancia = distancia;
+            // 2. Revisar si pasando por "actual" se llega mas barato a sus vecinos
+            for (int vecino = 0; vecino < n; vecino++) {
+                if (grafo.existeConexion(actual, vecino) && !visitado[vecino]) {
+                    int nuevaDistancia = distancias[actual] + grafo.getCosto(actual, vecino);
+                    if (nuevaDistancia < distancias[vecino]) {
+                        distancias[vecino] = nuevaDistancia;
+                        predecesores[vecino] = actual;
+                    }
+                }
+            }
         }
+        return new ResultadoDijkstra(distancias, predecesores);
     }
 }
